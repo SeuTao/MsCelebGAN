@@ -9,84 +9,11 @@ from PIL import Image
 import numpy as np
 
 
-class CelebDataset(Dataset):
-    def __init__(self, image_path, metadata_path, transform, mode):
-        self.image_path = image_path
-        self.transform = transform
-        self.mode = mode
-        self.lines = open(metadata_path, 'r').readlines()
-        self.num_data = int(self.lines[0])
-        self.attr2idx = {}
-        self.idx2attr = {}
-
-        print ('Start preprocessing dataset..!')
-        self.preprocess()
-        print ('Finished preprocessing dataset..!')
-
-        if self.mode == 'train':
-            self.num_data = len(self.train_filenames)
-        elif self.mode == 'test':
-            self.num_data = len(self.test_filenames)
-
-    def preprocess(self):
-        attrs = self.lines[1].split()
-        for i, attr in enumerate(attrs):
-            self.attr2idx[attr] = i
-            self.idx2attr[i] = attr
-
-        # self.selected_attrs = ['Black_Hair', 'Blond_Hair', 'Brown_Hair', 'Male', 'Young']
-        self.selected_attrs = ['Eyeglasses', 'Male', 'No_Beard', 'Smiling',  'Young']
-        self.train_filenames = []
-        self.train_labels = []
-        self.test_filenames = []
-        self.test_labels = []
-
-        lines = self.lines[2:]
-        random.shuffle(lines)   # random shuffling
-        for i, line in enumerate(lines):
-
-            splits = line.split()
-            filename = splits[0]
-            values = splits[1:]
-
-            label = []
-            for idx, value in enumerate(values):
-                attr = self.idx2attr[idx]
-
-                if attr in self.selected_attrs:
-                    if value == '1':
-                        label.append(1)
-                    else:
-                        label.append(0)
-
-            if (i+1) < 2000:
-                self.test_filenames.append(filename)
-                self.test_labels.append(label)
-            else:
-                self.train_filenames.append(filename)
-                self.train_labels.append(label)
-
-    def __getitem__(self, index):
-        if self.mode == 'train':
-            image = Image.open(os.path.join(self.image_path, self.train_filenames[index])).convert("RGB")
-            label = self.train_labels[index]
-        elif self.mode in ['test']:
-            image = Image.open(os.path.join(self.image_path, self.test_filenames[index])).convert("RGB")
-            label = self.test_labels[index]
-
-        return self.transform(image), torch.FloatTensor(label)
-
-    def __len__(self):
-        return self.num_data
-
-
-
 class MsCelebDataset(Dataset):
     def __init__(self, image_path, metadata_path, transform, mode):
         self.image_path = image_path
         self.transform = transform
         self.mode = mode
-        # self.lines = open(metadata_path, 'r').readlines()
 
         def default_list_reader(fileList):
             imgList = []
@@ -135,15 +62,6 @@ class MsCelebDataset(Dataset):
         aug_index = index% len(self.Aug_imglist)
         aug_image = Image.open(os.path.join(self.image_path, self.Aug_imglist[aug_index][0])).convert("L")
         aug_label =  self.Aug_imglist[aug_index][1]
-
-        # tmp_0 = self.transform(aug_image)
-        # tmp_1 = self.transform(origin_image)
-        #
-        # l0 = torch.from_numpy(np.asarray(aug_label).reshape([1]))
-        # l1 = torch.from_numpy(np.asarray(origin_label).reshape([1]))
-
-        # return self.transform(aug_image), torch.from_numpy(np.asarray(aug_label).reshape([-1,1])), \
-        #        self.transform(origin_image), torch.from_numpy(np.asarray(origin_label).reshape([-1,1]))
 
         return self.transform(aug_image), aug_label, \
            self.transform(origin_image), origin_label
