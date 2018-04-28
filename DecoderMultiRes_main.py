@@ -1,5 +1,4 @@
 import os
-os.environ["CUDA_VISIBLE_DEVICES"] = "4"
 import argparse
 from data_loader import get_pure_loader
 from torch.backends import cudnn
@@ -260,29 +259,6 @@ class DecoderSolver(object):
                 self.d_128_optimizer.step()
 
                 # Compute gradient penalty
-
-                # alpha = torch.rand(origin_x_128.size(0), 1, 1, 1).cuda().expand_as(origin_x_128)
-                # interpolated = Variable(alpha * origin_x_128.data + (1 - alpha) * fake_x_128.data, requires_grad=True)
-                # out = self.D_128(interpolated)
-                #
-                # grad = torch.autograd.grad(outputs=out,
-                #                            inputs=interpolated,
-                #                            grad_outputs=torch.ones(out.size()).cuda(),
-                #                            retain_graph=True,
-                #                            create_graph=True,
-                #                            only_inputs=True)[0]
-                #
-                # grad = grad.view(grad.size(0), -1)
-                # grad_l2norm = torch.sqrt(torch.sum(grad ** 2, dim=1))
-                # d_loss_gp = torch.mean((grad_l2norm - 1)**2)
-                #
-                # # Backward + Optimize
-                # d_loss = self.lambda_gp * d_loss_gp
-                # self.reset_grad()
-                # d_loss.backward()
-                # self.d_128_optimizer.step()
-
-
                 def gradient_penalty(fake_x, origin_x, D, d_optimizer):
 
                     alpha = torch.rand(origin_x.size(0), 1, 1, 1).cuda().expand_as(origin_x)
@@ -394,41 +370,6 @@ class DecoderSolver(object):
             torch.save(self.D_128.state_dict(),
                        os.path.join(self.model_save_path, '{}_final_D_128.pth'.format(e + 1)))
 
-
-
-    # def test(self):
-    #     """Facial attribute transfer on CelebA or facial expression synthesis on RaFD."""
-    #     # Load trained parameters
-    #     G_path = os.path.join(self.model_save_path, '{}_G.pth'.format(self.test_model))
-    #     self.G.load_state_dict(torch.load(G_path))
-    #     self.G.eval()
-    #
-    #     if self.dataset == 'CelebA':
-    #         data_loader = self.celebA_loader
-    #     else:
-    #         data_loader = self.rafd_loader
-    #
-    #     for i, (real_x, org_c) in enumerate(data_loader):
-    #         real_x = self.to_var(real_x, volatile=True)
-    #
-    #         if self.dataset == 'CelebA':
-    #             target_c_list = self.make_celeb_labels(org_c)
-    #         else:
-    #             target_c_list = []
-    #             for j in range(self.c_dim):
-    #                 target_c = self.one_hot(torch.ones(real_x.size(0)) * j, self.c_dim)
-    #                 target_c_list.append(self.to_var(target_c, volatile=True))
-    #
-    #         # Start translations
-    #         fake_image_list = [real_x]
-    #         for target_c in target_c_list:
-    #             fake_image_list.append(self.G(real_x, target_c))
-    #         fake_images = torch.cat(fake_image_list, dim=3)
-    #         save_path = os.path.join(self.result_path, '{}_fake.png'.format(i+1))
-    #         save_image(self.denorm(fake_images.data), save_path, nrow=1, padding=0)
-    #         print('Translated test images and saved into "{}"..!'.format(save_path))
-
-
 def str2bool(v):
     return v.lower() in ('true')
 
@@ -497,8 +438,7 @@ if __name__ == '__main__':
     parser.add_argument('--image_path', type=str, default=r'')
     parser.add_argument('--rafd_image_path', type=str, default=r'')
 
-    parser.add_argument('--metadata_path', type=str, default=r'/data6/shentao/Projects/LightCNN/data_lists/'
-                                                             r'MsCeleb_clean_aligned_num10_75628.txt_angle_aug.txt')
+    parser.add_argument('--metadata_path', type=str, default=r'./MsCeleb_clean_aligned_75628.txt')
 
     parser.add_argument('--log_path', type=str, default='./pure_gan_multires/logs')
     parser.add_argument('--model_save_path', type=str, default='./pure_gan_multires/models')
